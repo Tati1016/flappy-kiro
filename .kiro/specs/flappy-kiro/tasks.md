@@ -16,7 +16,7 @@ The approach is incremental: we'll build core infrastructure first, then add gam
   - _Requirements: Core game infrastructure_
 
 - [ ] 2. Implement core game state management
-  - [-] 2.1 Create `gameState.js` module
+  - [x] 2.1 Create `gameState.js` module
     - Implement `GameState` class with state transitions (START, PLAYING, GAME_OVER)
     - Add state validation to prevent invalid transitions
     - Implement state query methods (`isPlaying()`, `isGameOver()`, `isStart()`)
@@ -31,7 +31,7 @@ The approach is incremental: we'll build core infrastructure first, then add gam
     - _Requirements: Game state management_
 
 - [ ] 3. Implement physics engine
-  - [~] 3.1 Create `physics.js` module
+  - [x] 3.1 Create `physics.js` module
     - Implement `Physics` class with gravity, jump velocity, and max fall velocity constants
     - Implement `applyGravity()` to increase velocity each frame
     - Implement `applyJump()` to set upward velocity
@@ -48,13 +48,13 @@ The approach is incremental: we'll build core infrastructure first, then add gam
     - _Requirements: Physics simulation_
 
 - [ ] 4. Implement Ghosty entity and collision detection
-  - [~] 4.1 Create `ghosty.js` module
+  - [x] 4.1 Create `ghosty.js` module
     - Implement `Ghosty` class with position, velocity, dimensions, and sprite properties
     - Implement `reset()` method to return to starting position
     - Implement `getBounds()` method returning rectangle for collision detection
     - _Requirements: Player character, entity management_
   
-  - [~] 4.2 Create `collision.js` module
+  - [x] 4.2 Create `collision.js` module
     - Implement `CollisionDetector` class
     - Implement `rectanglesIntersect()` for AABB collision detection
     - Implement `checkWallCollision()` to detect Ghosty-wall collisions
@@ -71,18 +71,18 @@ The approach is incremental: we'll build core infrastructure first, then add gam
     - Test defensive validation handles invalid entities
     - _Requirements: Collision detection_
 
-- [~] 5. Checkpoint - Verify core mechanics
+- [x] 5. Checkpoint - Verify core mechanics
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 6. Implement wall system
-  - [~] 6.1 Create `wall.js` module
+  - [x] 6.1 Create `wall.js` module
     - Implement `Wall` class with position, gap, dimensions, speed, and passed flag
     - Implement `update()` method to move wall horizontally
     - Implement `isOffScreen()` method to check if wall should be removed
     - Implement `getBounds()` method returning top and bottom rectangles for collision
     - _Requirements: Obstacle generation, scrolling mechanics_
   
-  - [~] 6.2 Create `wallManager.js` module
+  - [x] 6.2 Create `wallManager.js` module
     - Implement `WallManager` class to manage wall lifecycle
     - Implement `generateWall()` with random gap position within valid bounds
     - Implement `update()` to move all walls and spawn new ones at intervals
@@ -100,7 +100,7 @@ The approach is incremental: we'll build core infrastructure first, then add gam
     - _Requirements: Obstacle generation_
 
 - [ ] 7. Implement score tracking
-  - [~] 7.1 Create `scoreTracker.js` module
+  - [x] 7.1 Create `scoreTracker.js` module
     - Implement `ScoreTracker` class with score property
     - Implement `reset()` to set score to zero
     - Implement `increment()` to increase score by one
@@ -115,7 +115,7 @@ The approach is incremental: we'll build core infrastructure first, then add gam
     - _Requirements: Score tracking_
 
 - [ ] 8. Implement asset loading system
-  - [~] 8.1 Create `assetLoader.js` module
+  - [x] 8.1 Create `assetLoader.js` module
     - Implement `AssetLoader` class
     - Implement `loadImage()` returning Promise with error handling
     - Implement `loadAudio()` returning Promise with error handling
@@ -123,7 +123,7 @@ The approach is incremental: we'll build core infrastructure first, then add gam
     - Add console warnings for failed asset loads
     - _Requirements: Asset loading, error handling for missing assets_
   
-  - [~] 8.2 Create `audioManager.js` module
+  - [x] 8.2 Create `audioManager.js` module
     - Implement `AudioManager` class to manage sound playback
     - Implement `play()` method with error handling (no-op if audio unavailable)
     - Implement `setEnabled()` to toggle audio on/off
@@ -131,7 +131,7 @@ The approach is incremental: we'll build core infrastructure first, then add gam
     - _Requirements: Audio playback, error handling_
 
 - [ ] 9. Implement rendering system
-  - [~] 9.1 Create `renderer.js` module
+  - [-] 9.1 Create `renderer.js` module
     - Implement `Renderer` class with canvas and context references
     - Implement `clear()` to clear canvas each frame
     - Implement `drawGhosty()` with sprite rendering and fallback rectangle

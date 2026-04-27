@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AssetLoader Test Suite - Flappy Kiro</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      background-color: #1a1a1a;
+      color: #00ff00;
+      padding: 20px;
+      margin: 0;
+    }
+    h1 {
+      color: #00ff00;
+      border-bottom: 2px solid #00ff00;
+      padding-bottom: 10px;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 10px;
+      border: 1px solid #333;
+      background-color: #0a0a0a;
+    }
+    .pass {
+      color: #00ff00;
+    }
+    .fail {
+      color: #ff0000;
+    }
+    .summary {
+      margin-top: 30px;
+      padding: 20px;
+      border: 2px solid #00ff00;
+      background-color: #0a0a0a;
+      font-size: 1.2em;
+    }
+    pre {
+      background-color: #000;
+      padding: 10px;
+      border-left: 3px solid #00ff00;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>AssetLoader Test Suite - Flappy Kiro</h1>
+  <div id="test-output"></div>
+  <div id="test-summary" class="summary"></div>
+
+  <script type="module">
+    import { AssetLoader } from './assetLoader.js';
+
+    let testsPassed = 0;
+    let testsFailed = 0;
+    const output = document.getElementById('test-output');
+
+    function log(message, isError = false) {
+      const div = document.createElement('div');
+      div.textContent = message;
+      if (isError) div.className = 'fail';
+      output.appendChild(div);
+      console.log(message);
+    }
+
+    function assert(condition, message) {
+      if (condition) {
+        log(`✓ ${message}`, false);
+        testsPassed++;
+        return true;
+      } else {
+        log(`✗ ${message}`, true);
+        testsFailed++;
+        return false;
+      }
+    }
+
+    function testSection(title) {
+      const section = document.createElement('div');
+      section.className = 'test-section';
+      section.innerHTML = `<h2>${title}</h2>`;
+      output.appendChild(section);
+      log(`\n${'='.repeat(60)}`);
+      log(title);
+      log('='.repeat(60));
+    }
+
+    // Test AssetLoader
+    async function testAssetLoader() {
+      testSection('AssetLoader Tests');
+
+      // Test constructor
+      const loader = new AssetLoader();
+      assert(loader !== null, 'AssetLoader constructor creates instance');
+
+      // Test loadImage with valid image
+      testSection('loadImage() - Valid Image');
+      const validImage = await loader.loadImage('assets/ghosty.png');
+      assert(validImage !== null, 'loadImage() returns non-null for valid image');
+      assert(validImage instanceof HTMLImageElement, 'loadImage() returns HTMLImageElement');
+      assert(validImage.complete, 'Loaded image is complete');
+      assert(validImage.naturalWidth > 0, 'Loaded image has width');
+      assert(validImage.naturalHeight > 0, 'Loaded image has height');
+
+      // Test loadImage with invalid image (graceful degradation)
+      testSection('loadImage() - Invalid Image (Graceful Degradation)');
+      const invalidImage = await loader.loadImage('assets/nonexistent.png');
+      assert(invalidImage === null, 'loadImage() returns null for missing image (graceful degradation)');
+
+      // Test loadAudio with valid audio
+      testSection('loadAudio() - Valid Audio');
+      const validAudio = await loader.loadAudio('assets/jump.wav');
+      assert(validAudio !== null, 'loadAudio() returns non-null for valid audio');
+      assert(validAudio instanceof HTMLAudioElement, 'loadAudio() returns HTMLAudioElement');
+      assert(validAudio.src.includes('jump.wav'), 'Loaded audio has correct src');
+
+      // Test loadAudio with invalid audio (graceful degradation)
+      testSection('loadAudio() - Invalid Audio (Graceful Degradation)');
+      const invalidAudio = await loader.loadAudio('assets/nonexistent.wav');
+      assert(invalidAudio === null, 'loadAudio() returns null for missing audio (graceful degradation)');
+
+      // Test loadAll with valid manifest
+      testSection('loadAll() - Valid Manifest');
+      const manifest = {
+        images: {
+          ghosty: 'assets/ghosty.png'
+        },
+        audio: {
+          jump: 'assets/jump.wav',
+          gameOver: 'assets/game_over.wav'
+        }
+      };
+
+      const assets = await loader.loadAll(manifest);
+      assert(assets !== null, 'loadAll() returns assets object');
+      assert(assets.images !== undefined, 'loadAll() returns images object');
+      assert(assets.audio !== undefined, 'loadAll() returns audio object');
+      assert(assets.images.ghosty !== null, 'loadAll() loads ghosty image');
+      assert(assets.images.ghosty instanceof HTMLImageElement, 'Loaded ghosty is HTMLImageElement');
+      assert(assets.audio.jump !== null, 'loadAll() loads jump audio');
+      assert(assets.audio.jump instanceof HTMLAudioElement, 'Loaded jump is HTMLAudioElement');
+      assert(assets.audio.gameOver !== null, 'loadAll() loads gameOver audio');
+      assert(assets.audio.gameOver instanceof HTMLAudioElement, 'Loaded gameOver is HTMLAudioElement');
+
+      // Test loadAll with mixed valid/invalid assets (graceful degradation)
+      testSection('loadAll() - Mixed Valid/Invalid Assets (Graceful Degradation)');
+      const mixedManifest = {
+        images: {
+          ghosty: 'assets/ghosty.png',
+          missing: 'assets/missing.png'
+        },
+        audio: {
+          jump: 'assets/jump.wav',
+          missing: 'assets/missing.wav'
+        }
+      };
+
+      const mixedAssets = await loader.loadAll(mixedManifest);
+      assert(mixedAssets.images.ghosty !== null, 'loadAll() loads valid image even with invalid ones');
+      assert(mixedAssets.images.missing === null, 'loadAll() returns null for invalid image');
+      assert(mixedAssets.audio.jump !== null, 'loadAll() loads valid audio even with invalid ones');
+      assert(mixedAssets.audio.missing === null, 'loadAll() returns null for invalid audio');
+
+      // Test loadAll with empty manifest
+      testSection('loadAll() - Empty Manifest');
+      const emptyAssets = await loader.loadAll({});
+      assert(emptyAssets.images !== undefined, 'loadAll() handles empty manifest - images object exists');
+      assert(emptyAssets.audio !== undefined, 'loadAll() handles empty manifest - audio object exists');
+      assert(Object.keys(emptyAssets.images).length === 0, 'loadAll() with empty manifest has no images');
+      assert(Object.keys(emptyAssets.audio).length === 0, 'loadAll() with empty manifest has no audio');
+
+      // Test loadAll with only images
+      testSection('loadAll() - Images Only');
+      const imagesOnlyManifest = {
+        images: {
+          ghosty: 'assets/ghosty.png'
+        }
+      };
+      const imagesOnlyAssets = await loader.loadAll(imagesOnlyManifest);
+      assert(imagesOnlyAssets.images.ghosty !== null, 'loadAll() loads images when only images provided');
+      assert(Object.keys(imagesOnlyAssets.audio).length === 0, 'loadAll() has empty audio when only images provided');
+
+      // Test loadAll with only audio
+      testSection('loadAll() - Audio Only');
+      const audioOnlyManifest = {
+        audio: {
+          jump: 'assets/jump.wav'
+        }
+      };
+      const audioOnlyAssets = await loader.loadAll(audioOnlyManifest);
+      assert(audioOnlyAssets.audio.jump !== null, 'loadAll() loads audio when only audio provided');
+      assert(Object.keys(audioOnlyAssets.images).length === 0, 'loadAll() has empty images when only audio provided');
+    }
+
+    // Run all tests
+    async function runAllTests() {
+      log('='.repeat(60));
+      log('FLAPPY KIRO - ASSETLOADER TEST SUITE');
+      log('='.repeat(60));
+
+      try {
+        await testAssetLoader();
+
+        const summary = document.getElementById('test-summary');
+        summary.innerHTML = `
+          <h2>TEST SUMMARY</h2>
+          <div class="${testsFailed === 0 ? 'pass' : 'fail'}">
+            <div>✓ Passed: ${testsPassed}</div>
+            <div>✗ Failed: ${testsFailed}</div>
+            <div>Total: ${testsPassed + testsFailed}</div>
+          </div>
+          ${testsFailed === 0 
+            ? '<div class="pass">🎉 ALL TESTS PASSED! AssetLoader is working correctly.</div>'
+            : '<div class="fail">❌ SOME TESTS FAILED. Please review the failures above.</div>'
+          }
+        `;
+
+        log('\n' + '='.repeat(60));
+        log('TEST SUMMARY');
+        log('='.repeat(60));
+        log(`✓ Passed: ${testsPassed}`);
+        log(`✗ Failed: ${testsFailed}`);
+        log(`Total: ${testsPassed + testsFailed}`);
+        
+        if (testsFailed === 0) {
+          log('\n🎉 ALL TESTS PASSED! AssetLoader is working correctly.');
+        } else {
+          log('\n❌ SOME TESTS FAILED. Please review the failures above.');
+        }
+      } catch (error) {
+        log('\n❌ TEST SUITE ERROR: ' + error.message, true);
+        log(error.stack, true);
+        const summary = document.getElementById('test-summary');
+        summary.innerHTML = `
+          <h2>TEST ERROR</h2>
+          <div class="fail">
+            <div>❌ Test suite encountered an error</div>
+            <pre>${error.message}\n${error.stack}</pre>
+          </div>
+        `;
+      }
+    }
+
+    runAllTests();
+  </script>
+</body>
+</html>

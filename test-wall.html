@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wall Test - Flappy Kiro</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #00ff00;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 10px;
+      border: 1px solid #333;
+    }
+    .pass { color: #00ff00; }
+    .fail { color: #ff0000; }
+    h2 { color: #00aaff; }
+  </style>
+</head>
+<body>
+  <h1>Flappy Kiro - Wall Test</h1>
+  <div id="results"></div>
+
+  <script type="module">
+    import { Wall } from './wall.js';
+
+    const results = document.getElementById('results');
+    let testsPassed = 0;
+    let testsFailed = 0;
+
+    function log(message, isPass = true) {
+      const div = document.createElement('div');
+      div.className = isPass ? 'pass' : 'fail';
+      div.textContent = `${isPass ? '✓' : '✗'} ${message}`;
+      results.appendChild(div);
+      if (isPass) testsPassed++;
+      else testsFailed++;
+      return isPass;
+    }
+
+    function testSection(title) {
+      const section = document.createElement('div');
+      section.className = 'test-section';
+      const h2 = document.createElement('h2');
+      h2.textContent = title;
+      section.appendChild(h2);
+      results.appendChild(section);
+      return section;
+    }
+
+    function assert(condition, message) {
+      return log(message, condition);
+    }
+
+    // Test Wall
+    function testWall() {
+      testSection('Wall Tests');
+
+      // Test constructor and initial properties
+      const wall = new Wall(480, 320, 150, 60);
+      assert(wall.x === 480, 'Initial x position is 480');
+      assert(wall.gapY === 320, 'Gap Y position is 320');
+      assert(wall.gapHeight === 150, 'Gap height is 150');
+      assert(wall.width === 60, 'Wall width is 60');
+      assert(wall.speed === 3, 'Wall speed is 3 pixels/frame');
+      assert(wall.passed === false, 'Initial passed flag is false');
+
+      // Test default parameters
+      const wall2 = new Wall(500, 300);
+      assert(wall2.gapHeight === 150, 'Default gap height is 150');
+      assert(wall2.width === 60, 'Default width is 60');
+
+      // Test update method
+      const wall3 = new Wall(100, 200, 150, 60);
+      wall3.update();
+      assert(wall3.x === 97, 'update() moves wall left by speed (100 - 3 = 97)');
+      
+      wall3.update();
+      assert(wall3.x === 94, 'update() continues moving wall (97 - 3 = 94)');
+
+      // Test isOffScreen method
+      const wall4 = new Wall(10, 200, 150, 60);
+      assert(!wall4.isOffScreen(), 'Wall at x=10 is not off-screen (10 + 60 = 70 > 0)');
+      
+      const wall5 = new Wall(-50, 200, 150, 60);
+      assert(!wall5.isOffScreen(), 'Wall at x=-50 is not off-screen (-50 + 60 = 10 > 0)');
+      
+      const wall6 = new Wall(-60, 200, 150, 60);
+      assert(!wall6.isOffScreen(), 'Wall at x=-60 is at edge (right edge at 0)');
+      
+      const wall7 = new Wall(-61, 200, 150, 60);
+      assert(wall7.isOffScreen(), 'Wall at x=-61 is off-screen (-61 + 60 = -1 < 0)');
+
+      // Test getBounds method
+      const wall8 = new Wall(200, 320, 150, 60);
+      const bounds = wall8.getBounds();
+      
+      assert(bounds.top !== undefined, 'getBounds returns top rectangle');
+      assert(bounds.bottom !== undefined, 'getBounds returns bottom rectangle');
+      
+      // Top wall section
+      assert(bounds.top.x === 200, 'Top wall x position is 200');
+      assert(bounds.top.y === 0, 'Top wall starts at y=0');
+      assert(bounds.top.width === 60, 'Top wall width is 60');
+      assert(bounds.top.height === 245, 'Top wall height is gapY - gapHeight/2 (320 - 75 = 245)');
+      
+      // Bottom wall section
+      assert(bounds.bottom.x === 200, 'Bottom wall x position is 200');
+      assert(bounds.bottom.y === 395, 'Bottom wall starts at gapY + gapHeight/2 (320 + 75 = 395)');
+      assert(bounds.bottom.width === 60, 'Bottom wall width is 60');
+      assert(bounds.bottom.height === 10000, 'Bottom wall height extends to bottom (large value)');
+
+      // Test getBounds with different gap positions
+      const wall9 = new Wall(300, 200, 100, 50);
+      const bounds9 = wall9.getBounds();
+      assert(bounds9.top.height === 150, 'Top wall height with gap at 200 (200 - 50 = 150)');
+      assert(bounds9.bottom.y === 250, 'Bottom wall starts at 250 (200 + 50 = 250)');
+
+      // Test passed flag can be modified
+      const wall10 = new Wall(100, 200, 150, 60);
+      wall10.passed = true;
+      assert(wall10.passed === true, 'Passed flag can be set to true');
+    }
+
+    // Run all tests
+    function runTests() {
+      console.log('Running wall tests...');
+      
+      try {
+        testWall();
+
+        const section = testSection('Summary');
+        
+        log(`Tests Passed: ${testsPassed}`, true);
+        log(`Tests Failed: ${testsFailed}`, testsFailed === 0);
+        
+        if (testsFailed === 0) {
+          log('✓ ALL WALL TESTS PASSED', true);
+        } else {
+          log('✗ SOME TESTS FAILED', false);
+        }
+      } catch (error) {
+        log('Test error: ' + error.message, false);
+        console.error(error);
+      }
+    }
+
+    runTests();
+  </script>
+</body>
+</html>

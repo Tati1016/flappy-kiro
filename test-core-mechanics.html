@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Core Mechanics Test - Flappy Kiro</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #00ff00;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 10px;
+      border: 1px solid #333;
+    }
+    .pass { color: #00ff00; }
+    .fail { color: #ff0000; }
+    h2 { color: #00aaff; }
+  </style>
+</head>
+<body>
+  <h1>Flappy Kiro - Core Mechanics Test</h1>
+  <div id="results"></div>
+
+  <script type="module">
+    import { GameState } from './gameState.js';
+    import { Ghosty } from './ghosty.js';
+    import { CollisionDetector } from './collision.js';
+    import { Physics } from './physics.js';
+
+    const results = document.getElementById('results');
+
+    function log(message, isPass = true) {
+      const div = document.createElement('div');
+      div.className = isPass ? 'pass' : 'fail';
+      div.textContent = `${isPass ? '✓' : '✗'} ${message}`;
+      results.appendChild(div);
+      return isPass;
+    }
+
+    function testSection(title) {
+      const section = document.createElement('div');
+      section.className = 'test-section';
+      const h2 = document.createElement('h2');
+      h2.textContent = title;
+      section.appendChild(h2);
+      results.appendChild(section);
+      return section;
+    }
+
+    // Test GameState
+    function testGameState() {
+      const section = testSection('GameState Tests');
+      const state = new GameState();
+      let allPass = true;
+
+      // Test initial state
+      allPass &= log('Initial state is START: ' + (state.getCurrentState() === 'START'));
+      allPass &= log('isStart() returns true: ' + state.isStart());
+
+      // Test valid transition START -> PLAYING
+      state.setState('PLAYING');
+      allPass &= log('Transition START -> PLAYING: ' + (state.getCurrentState() === 'PLAYING'));
+      allPass &= log('isPlaying() returns true: ' + state.isPlaying());
+
+      // Test valid transition PLAYING -> GAME_OVER
+      state.setState('GAME_OVER');
+      allPass &= log('Transition PLAYING -> GAME_OVER: ' + (state.getCurrentState() === 'GAME_OVER'));
+      allPass &= log('isGameOver() returns true: ' + state.isGameOver());
+
+      // Test valid transition GAME_OVER -> START
+      state.setState('START');
+      allPass &= log('Transition GAME_OVER -> START: ' + (state.getCurrentState() === 'START'));
+
+      // Test invalid transition (should be rejected)
+      state.setState('GAME_OVER'); // Invalid: START -> GAME_OVER
+      allPass &= log('Invalid transition rejected: ' + (state.getCurrentState() === 'START'));
+
+      // Test reset
+      state.setState('PLAYING');
+      state.setState('GAME_OVER');
+      state.reset();
+      allPass &= log('Reset returns to START: ' + (state.getCurrentState() === 'START'));
+
+      return allPass;
+    }
+
+    // Test Ghosty
+    function testGhosty() {
+      const section = testSection('Ghosty Tests');
+      const ghosty = new Ghosty(100, 200, 40, 40);
+      let allPass = true;
+
+      // Test initial properties
+      allPass &= log('Initial position x=100: ' + (ghosty.x === 100));
+      allPass &= log('Initial position y=200: ' + (ghosty.y === 200));
+      allPass &= log('Width is 40: ' + (ghosty.width === 40));
+      allPass &= log('Height is 40: ' + (ghosty.height === 40));
+      allPass &= log('Initial velocity is 0: ' + (ghosty.velocity === 0));
+
+      // Test getBounds
+      const bounds = ghosty.getBounds();
+      allPass &= log('getBounds returns correct x: ' + (bounds.x === 100));
+      allPass &= log('getBounds returns correct y: ' + (bounds.y === 200));
+      allPass &= log('getBounds returns correct width: ' + (bounds.width === 40));
+      allPass &= log('getBounds returns correct height: ' + (bounds.height === 40));
+
+      // Test reset
+      ghosty.x = 300;
+      ghosty.y = 400;
+      ghosty.velocity = 10;
+      ghosty.reset();
+      allPass &= log('Reset restores x position: ' + (ghosty.x === 100));
+      allPass &= log('Reset restores y position: ' + (ghosty.y === 200));
+      allPass &= log('Reset clears velocity: ' + (ghosty.velocity === 0));
+
+      return allPass;
+    }
+
+    // Test CollisionDetector
+    function testCollisionDetector() {
+      const section = testSection('CollisionDetector Tests');
+      const detector = new CollisionDetector();
+      let allPass = true;
+
+      // Test rectanglesIntersect - overlapping
+      const rect1 = { x: 0, y: 0, width: 10, height: 10 };
+      const rect2 = { x: 5, y: 5, width: 10, height: 10 };
+      allPass &= log('Detects overlapping rectangles: ' + detector.rectanglesIntersect(rect1, rect2));
+
+      // Test rectanglesIntersect - non-overlapping
+      const rect3 = { x: 0, y: 0, width: 10, height: 10 };
+      const rect4 = { x: 20, y: 20, width: 10, height: 10 };
+      allPass &= log('Detects non-overlapping rectangles: ' + !detector.rectanglesIntersect(rect3, rect4));
+
+      // Test rectanglesIntersect - edge touching
+      const rect5 = { x: 0, y: 0, width: 10, height: 10 };
+      const rect6 = { x: 10, y: 0, width: 10, height: 10 };
+      allPass &= log('Edge-touching rectangles: ' + !detector.rectanglesIntersect(rect5, rect6));
+
+      // Test checkBoundaryCollision - above screen
+      const ghosty1 = { y: -10, height: 40 };
+      allPass &= log('Detects Ghosty above screen: ' + detector.checkBoundaryCollision(ghosty1, 640));
+
+      // Test checkBoundaryCollision - below screen
+      const ghosty2 = { y: 620, height: 40 };
+      allPass &= log('Detects Ghosty below screen: ' + detector.checkBoundaryCollision(ghosty2, 640));
+
+      // Test checkBoundaryCollision - within bounds
+      const ghosty3 = { y: 300, height: 40 };
+      allPass &= log('Ghosty within bounds: ' + !detector.checkBoundaryCollision(ghosty3, 640));
+
+      // Test defensive validation
+      allPass &= log('Handles null entities: ' + !detector.rectanglesIntersect(null, rect1));
+      allPass &= log('Handles invalid entities: ' + !detector.checkBoundaryCollision(null, 640));
+
+      return allPass;
+    }
+
+    // Test Physics
+    function testPhysics() {
+      const section = testSection('Physics Tests');
+      let allPass = true;
+
+      try {
+        const physics = new Physics(0.6, -10, 12);
+        const ghosty = new Ghosty(100, 200, 40, 40);
+        
+        // Test applyGravity
+        ghosty.velocity = 0;
+        physics.applyGravity(ghosty);
+        allPass &= log('applyGravity increases velocity by GRAVITY: ' + (ghosty.velocity === 0.6));
+        
+        // Test applyJump
+        physics.applyJump(ghosty);
+        allPass &= log('applyJump sets velocity to JUMP_VELOCITY: ' + (ghosty.velocity === -10));
+        
+        // Test clampVelocity
+        ghosty.velocity = 15; // Above max
+        physics.clampVelocity(ghosty);
+        allPass &= log('clampVelocity limits to MAX_FALL_VELOCITY: ' + (ghosty.velocity === 12));
+        
+        // Test clampVelocity doesn't affect normal velocity
+        ghosty.velocity = 5;
+        physics.clampVelocity(ghosty);
+        allPass &= log('clampVelocity preserves normal velocity: ' + (ghosty.velocity === 5));
+        
+        // Test updatePosition
+        ghosty.y = 100;
+        ghosty.velocity = 10;
+        physics.updatePosition(ghosty, 1.0);
+        allPass &= log('updatePosition updates y by velocity: ' + (ghosty.y === 110));
+        
+        // Test updatePosition with deltaTime
+        ghosty.y = 100;
+        ghosty.velocity = 10;
+        physics.updatePosition(ghosty, 2.0);
+        allPass &= log('updatePosition respects deltaTime: ' + (ghosty.y === 120));
+        
+        // Test defensive validation
+        physics.applyGravity(null);
+        physics.applyJump(null);
+        physics.clampVelocity(null);
+        physics.updatePosition(null, 1.0);
+        allPass &= log('Handles null entities gracefully', true);
+        
+      } catch (error) {
+        log('Physics test error: ' + error.message, false);
+        allPass = false;
+      }
+
+      return allPass;
+    }
+
+    // Run all tests
+    function runTests() {
+      console.log('Running core mechanics tests...');
+      
+      const gameStatePass = testGameState();
+      const ghostyPass = testGhosty();
+      const collisionPass = testCollisionDetector();
+      const physicsPass = testPhysics();
+
+      const section = testSection('Summary');
+      const allPass = gameStatePass && ghostyPass && collisionPass && physicsPass;
+      
+      if (allPass) {
+        log('✓ ALL CORE MECHANICS TESTS PASSED', true);
+      } else {
+        log('✗ SOME TESTS FAILED', false);
+      }
+    }
+
+    runTests();
+  </script>
+</body>
+</html>

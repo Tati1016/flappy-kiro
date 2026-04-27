@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Renderer Test - Flappy Kiro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Press Start 2P', monospace;
+      background-color: #1a1a1a;
+      color: #fff;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    canvas {
+      display: block;
+      margin: 20px auto;
+      border: 3px solid #fff;
+      background-color: #87CEEB;
+    }
+    .controls {
+      text-align: center;
+      margin: 20px 0;
+    }
+    button {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      padding: 10px 20px;
+      margin: 5px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    #testResults {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #2a2a2a;
+      border-radius: 5px;
+      font-size: 10px;
+      line-height: 1.6;
+    }
+    .pass { color: #4CAF50; }
+    .fail { color: #f44336; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Renderer Test</h1>
+    <canvas id="testCanvas" width="480" height="640"></canvas>
+    
+    <div class="controls">
+      <button onclick="testStartScreen()">Test Start Screen</button>
+      <button onclick="testPlayingState()">Test Playing State</button>
+      <button onclick="testGameOverScreen()">Test Game Over Screen</button>
+      <button onclick="runAllTests()">Run All Tests</button>
+    </div>
+    
+    <div id="testResults"></div>
+  </div>
+
+  <script type="module">
+    import { Renderer } from './renderer.js';
+    import { GameState } from './gameState.js';
+    import { Ghosty } from './ghosty.js';
+    import { Wall } from './wall.js';
+
+    const canvas = document.getElementById('testCanvas');
+    const ctx = canvas.getContext('2d');
+    const renderer = new Renderer(canvas, ctx);
+    
+    let testResults = [];
+
+    function log(message, isPass = true) {
+      const className = isPass ? 'pass' : 'fail';
+      const symbol = isPass ? '✓' : '✗';
+      testResults.push(`<div class="${className}">${symbol} ${message}</div>`);
+      updateResults();
+    }
+
+    function updateResults() {
+      document.getElementById('testResults').innerHTML = testResults.join('');
+    }
+
+    function clearResults() {
+      testResults = [];
+      updateResults();
+    }
+
+    // Test 1: Start Screen
+    window.testStartScreen = function() {
+      clearResults();
+      log('Testing Start Screen rendering...');
+      
+      const gameState = new GameState();
+      const ghosty = new Ghosty();
+      const walls = [];
+      const score = 0;
+      
+      try {
+        renderer.render(gameState, ghosty, walls, score);
+        log('Start screen rendered successfully');
+        log('Title "FLAPPY KIRO" should be visible');
+        log('Instructions "CLICK OR PRESS SPACE TO START" should be visible');
+      } catch (error) {
+        log(`Start screen rendering failed: ${error.message}`, false);
+      }
+    };
+
+    // Test 2: Playing State
+    window.testPlayingState = function() {
+      clearResults();
+      log('Testing Playing State rendering...');
+      
+      const gameState = new GameState();
+      gameState.setState('PLAYING');
+      
+      const ghosty = new Ghosty(100, 200, 40, 40);
+      
+      // Create some walls
+      const walls = [
+        new Wall(300, 200, 150, 60),
+        new Wall(450, 350, 150, 60)
+      ];
+      
+      const score = 5;
+      
+      try {
+        renderer.render(gameState, ghosty, walls, score);
+        log('Playing state rendered successfully');
+        log('Ghosty should be visible (gold rectangle with eyes)');
+        log('Two green walls should be visible');
+        log('Score "5" should be displayed at top');
+      } catch (error) {
+        log(`Playing state rendering failed: ${error.message}`, false);
+      }
+    };
+
+    // Test 3: Game Over Screen
+    window.testGameOverScreen = function() {
+      clearResults();
+      log('Testing Game Over Screen rendering...');
+      
+      const gameState = new GameState();
+      gameState.setState('PLAYING');
+      gameState.setState('GAME_OVER');
+      
+      const ghosty = new Ghosty(100, 500, 40, 40);
+      const walls = [new Wall(200, 300, 150, 60)];
+      const score = 12;
+      
+      try {
+        renderer.render(gameState, ghosty, walls, score);
+        log('Game over screen rendered successfully');
+        log('Semi-transparent overlay should be visible');
+        log('"GAME OVER" text should be visible in red');
+        log('Final score "12" should be displayed');
+        log('Restart instructions should be visible');
+      } catch (error) {
+        log(`Game over screen rendering failed: ${error.message}`, false);
+      }
+    };
+
+    // Test 4: Individual methods
+    function testIndividualMethods() {
+      log('Testing individual renderer methods...');
+      
+      try {
+        // Test clear
+        renderer.clear();
+        log('clear() method works');
+        
+        // Test drawGhosty with fallback
+        const ghosty = new Ghosty(100, 100, 40, 40);
+        renderer.drawGhosty(ghosty);
+        log('drawGhosty() with fallback rendering works');
+        
+        // Test drawWall
+        const wall = new Wall(200, 300, 150, 60);
+        renderer.drawWall(wall);
+        log('drawWall() method works');
+        
+        // Test drawScore
+        renderer.drawScore(42);
+        log('drawScore() method works');
+        
+        // Test drawStartScreen
+        renderer.drawStartScreen();
+        log('drawStartScreen() method works');
+        
+        // Test drawGameOverScreen
+        renderer.drawGameOverScreen(99);
+        log('drawGameOverScreen() method works');
+        
+      } catch (error) {
+        log(`Individual method test failed: ${error.message}`, false);
+      }
+    }
+
+    // Run all tests
+    window.runAllTests = function() {
+      clearResults();
+      log('=== Running All Renderer Tests ===');
+      log('');
+      
+      testIndividualMethods();
+      log('');
+      
+      log('Visual tests (check canvas):');
+      log('1. Start Screen - click button to verify');
+      log('2. Playing State - click button to verify');
+      log('3. Game Over Screen - click button to verify');
+      log('');
+      log('All automated tests completed!');
+      log('Use the buttons above to visually verify each screen.');
+    };
+
+    // Initial test
+    testStartScreen();
+  </script>
+</body>
+</html>
