@@ -3,11 +3,6 @@
  * Initializes canvas, loads assets, and sets up all game components
  */
 
-/**
- * Main Entry Point for Flappy Kiro
- * Initializes canvas, loads assets, and sets up all game components
- */
-
 import { GameState } from './gameState.js';
 import { Physics } from './physics.js';
 import { Ghosty } from './ghosty.js';

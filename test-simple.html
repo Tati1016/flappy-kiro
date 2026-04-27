@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple Test</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    canvas {
+      border: 4px solid #fff;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="testCanvas" width="480" height="640"></canvas>
+  
+  <script>
+    console.log('Script loaded');
+    const canvas = document.getElementById('testCanvas');
+    console.log('Canvas:', canvas);
+    
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      console.log('Context:', ctx);
+      
+      if (ctx) {
+        // Draw sky blue background
+        ctx.fillStyle = '#87CEEB';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw title
+        ctx.fillStyle = '#FFFFFF';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 4;
+        ctx.font = '48px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        ctx.strokeText('TEST', canvas.width / 2, canvas.height / 2);
+        ctx.fillText('TEST', canvas.width / 2, canvas.height / 2);
+        
+        console.log('Drawing complete!');
+      }
+    }
+  </script>
+</body>
+</html>
