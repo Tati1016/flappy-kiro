@@ -3,6 +3,11 @@
  * Initializes canvas, loads assets, and sets up all game components
  */
 
+/**
+ * Main Entry Point for Flappy Kiro
+ * Initializes canvas, loads assets, and sets up all game components
+ */
+
 import { GameState } from './gameState.js';
 import { Physics } from './physics.js';
 import { Ghosty } from './ghosty.js';
@@ -14,27 +19,27 @@ import { AudioManager } from './audioManager.js';
 import { Renderer } from './renderer.js';
 import { InputHandler } from './input.js';
 
-// Wait for DOM to be fully loaded
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('DOM loaded, initializing game...');
-  
-  // Get canvas and error message elements
-  const canvas = document.getElementById('gameCanvas');
-  const errorMessage = document.getElementById('errorMessage');
+// Initialize game immediately - modules are deferred by default
+console.log('Starting Flappy Kiro initialization...');
 
-  // Check for canvas element existence
-  if (!canvas) {
-    console.error('Canvas element not found');
-    if (errorMessage) {
-      errorMessage.classList.remove('hidden');
-    }
-    return;
+// Get canvas and error message elements
+const canvas = document.getElementById('gameCanvas');
+const errorMessage = document.getElementById('errorMessage');
+
+console.log('Canvas element:', canvas);
+console.log('Error message element:', errorMessage);
+
+// Check for canvas element existence
+if (!canvas) {
+  console.error('Canvas element not found');
+  if (errorMessage) {
+    errorMessage.classList.remove('hidden');
   }
-
-  console.log('Canvas element found:', canvas);
-
+} else {
   // Check for 2D context support
   const context = canvas.getContext('2d');
+  
+  console.log('Canvas context:', context);
   
   if (!context) {
     console.error('Canvas 2D context not supported');
@@ -42,14 +47,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (errorMessage) {
       errorMessage.classList.remove('hidden');
     }
-    return;
+  } else {
+    console.log('Canvas initialized successfully, starting game...');
+    // Canvas is supported - initialize game
+    initializeGame(canvas, context);
   }
-
-  console.log('Canvas 2D context obtained successfully');
-
-  // Canvas is supported - initialize game
-  initializeGame(canvas, context);
-});
+}
 
 /**
  * Initialize the game with all components
