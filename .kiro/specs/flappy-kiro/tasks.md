@@ -131,7 +131,7 @@ The approach is incremental: we'll build core infrastructure first, then add gam
     - _Requirements: Audio playback, error handling_
 
 - [ ] 9. Implement rendering system
-  - [-] 9.1 Create `renderer.js` module
+  - [x] 9.1 Create `renderer.js` module
     - Implement `Renderer` class with canvas and context references
     - Implement `clear()` to clear canvas each frame
     - Implement `drawGhosty()` with sprite rendering and fallback rectangle
@@ -143,7 +143,7 @@ The approach is incremental: we'll build core infrastructure first, then add gam
     - _Requirements: Visual rendering, UI screens, fallback rendering_
 
 - [ ] 10. Implement input handling
-  - [~] 10.1 Create `input.js` module
+  - [-] 10.1 Create `input.js` module
     - Implement `InputHandler` class
     - Add event listeners for mouse click and spacebar
     - Implement `onInput()` callback registration
