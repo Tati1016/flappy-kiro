@@ -14,17 +14,25 @@ import { AudioManager } from './audioManager.js';
 import { Renderer } from './renderer.js';
 import { InputHandler } from './input.js';
 
-// Get canvas and error message elements
-const canvas = document.getElementById('gameCanvas');
-const errorMessage = document.getElementById('errorMessage');
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM loaded, initializing game...');
+  
+  // Get canvas and error message elements
+  const canvas = document.getElementById('gameCanvas');
+  const errorMessage = document.getElementById('errorMessage');
 
-// Check for canvas element existence
-if (!canvas) {
-  console.error('Canvas element not found');
-  if (errorMessage) {
-    errorMessage.classList.remove('hidden');
+  // Check for canvas element existence
+  if (!canvas) {
+    console.error('Canvas element not found');
+    if (errorMessage) {
+      errorMessage.classList.remove('hidden');
+    }
+    return;
   }
-} else {
+
+  console.log('Canvas element found:', canvas);
+
   // Check for 2D context support
   const context = canvas.getContext('2d');
   
@@ -34,11 +42,14 @@ if (!canvas) {
     if (errorMessage) {
       errorMessage.classList.remove('hidden');
     }
-  } else {
-    // Canvas is supported - initialize game
-    initializeGame(canvas, context);
+    return;
   }
-}
+
+  console.log('Canvas 2D context obtained successfully');
+
+  // Canvas is supported - initialize game
+  initializeGame(canvas, context);
+});
 
 /**
  * Initialize the game with all components
