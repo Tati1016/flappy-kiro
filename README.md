@@ -4,7 +4,7 @@ Un juego de navegador estilo Flappy Bird construido con JavaScript vanilla, HTML
 
 ## 🚀 Demo en Vivo
 
-[Jugar Flappy Kiro](https://tu-proyecto.vercel.app)
+[Jugar Flappy Kiro](https://flappy-kiro-omega.vercel.app)
 
 ## 🎯 Características
 
