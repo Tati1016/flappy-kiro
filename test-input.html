@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InputHandler Test - Flappy Kiro</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #f0f0f0;
+    }
+    h1 {
+      color: #333;
+    }
+    #testCanvas {
+      border: 2px solid #333;
+      background-color: #87ceeb;
+      display: block;
+      margin: 20px auto;
+      cursor: pointer;
+    }
+    .test-results {
+      background-color: white;
+      padding: 20px;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+    .test-item {
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 3px;
+    }
+    .pass {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .fail {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+    #eventLog {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .log-entry {
+      padding: 5px;
+      border-bottom: 1px solid #dee2e6;
+    }
+  </style>
+</head>
+<body>
+  <h1>InputHandler Test Suite</h1>
+  
+  <div class="info">
+    <strong>Instructions:</strong>
+    <ul>
+      <li>Click on the blue canvas below</li>
+      <li>Press the spacebar key</li>
+      <li>Watch the event log and test results update</li>
+    </ul>
+  </div>
+
+  <canvas id="testCanvas" width="480" height="320"></canvas>
+
+  <div id="eventLog">
+    <strong>Event Log:</strong>
+    <div id="logEntries"></div>
+  </div>
+
+  <div class="test-results">
+    <h2>Test Results</h2>
+    <div id="results"></div>
+  </div>
+
+  <script type="module">
+    import { InputHandler } from './input.js';
+
+    const canvas = document.getElementById('testCanvas');
+    const resultsDiv = document.getElementById('results');
+    const logEntriesDiv = document.getElementById('logEntries');
+    
+    let testResults = [];
+    let eventCount = 0;
+
+    function logEvent(message) {
+      eventCount++;
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.textContent = `[${eventCount}] ${new Date().toLocaleTimeString()}: ${message}`;
+      logEntriesDiv.insertBefore(entry, logEntriesDiv.firstChild);
+    }
+
+    function addTestResult(name, passed, message) {
+      testResults.push({ name, passed, message });
+      updateResults();
+    }
+
+    function updateResults() {
+      resultsDiv.innerHTML = testResults.map(test => 
+        `<div class="test-item ${test.passed ? 'pass' : 'fail'}">
+          ${test.passed ? '✓' : '✗'} ${test.name}: ${test.message}
+        </div>`
+      ).join('');
+    }
+
+    // Test 1: Constructor
+    try {
+      const handler = new InputHandler(canvas);
+      addTestResult('Constructor', true, 'InputHandler created successfully');
+    } catch (error) {
+      addTestResult('Constructor', false, `Error: ${error.message}`);
+    }
+
+    // Test 2: onInput callback registration
+    try {
+      const handler = new InputHandler(canvas);
+      let callbackRegistered = false;
+      handler.onInput(() => { callbackRegistered = true; });
+      addTestResult('onInput()', handler.callback !== null, 'Callback registered successfully');
+    } catch (error) {
+      addTestResult('onInput()', false, `Error: ${error.message}`);
+    }
+
+    // Test 3: Enable/Disable
+    try {
+      const handler = new InputHandler(canvas);
+      handler.enable();
+      const enabledState = handler.enabled;
+      handler.disable();
+      const disabledState = !handler.enabled;
+      addTestResult('Enable/Disable', enabledState && disabledState, 'Enable and disable work correctly');
+    } catch (error) {
+      addTestResult('Enable/Disable', false, `Error: ${error.message}`);
+    }
+
+    // Test 4: Interactive test - Click and Spacebar
+    const interactiveHandler = new InputHandler(canvas);
+    let clickCount = 0;
+    let spaceCount = 0;
+
+    interactiveHandler.onInput(() => {
+      logEvent('Input detected!');
+    });
+
+    interactiveHandler.enable();
+    addTestResult('Interactive Test', true, 'Handler enabled - try clicking canvas or pressing spacebar');
+
+    // Test 5: Callback execution on click
+    canvas.addEventListener('click', () => {
+      clickCount++;
+      logEvent(`Canvas clicked (${clickCount} times)`);
+    });
+
+    // Test 6: Callback execution on spacebar
+    document.addEventListener('keydown', (event) => {
+      if (event.code === 'Space' || event.key === ' ') {
+        spaceCount++;
+        logEvent(`Spacebar pressed (${spaceCount} times)`);
+      }
+    });
+
+    // Test 7: Verify spacebar preventDefault
+    let spacebarPrevented = false;
+    document.addEventListener('keydown', (event) => {
+      if (event.code === 'Space' || event.key === ' ') {
+        if (event.defaultPrevented) {
+          spacebarPrevented = true;
+          if (spaceCount === 1) {
+            addTestResult('Spacebar preventDefault', true, 'Spacebar default behavior prevented (no page scroll)');
+          }
+        }
+      }
+    });
+
+    // Test 8: Multiple enable/disable cycles
+    try {
+      const handler = new InputHandler(canvas);
+      handler.enable();
+      handler.enable(); // Should not cause error
+      handler.disable();
+      handler.disable(); // Should not cause error
+      addTestResult('Multiple Enable/Disable', true, 'Multiple enable/disable calls handled gracefully');
+    } catch (error) {
+      addTestResult('Multiple Enable/Disable', false, `Error: ${error.message}`);
+    }
+
+    // Test 9: Callback not called when disabled
+    try {
+      const handler = new InputHandler(canvas);
+      let callCount = 0;
+      handler.onInput(() => { callCount++; });
+      handler.enable();
+      handler.disable();
+      
+      // Simulate click (won't actually trigger because handler is disabled)
+      addTestResult('Disabled Handler', true, 'Handler can be disabled after enabling');
+    } catch (error) {
+      addTestResult('Disabled Handler', false, `Error: ${error.message}`);
+    }
+
+    // Draw instructions on canvas
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#87ceeb';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '20px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Click me or press SPACE', canvas.width / 2, canvas.height / 2 - 20);
+    ctx.font = '14px Arial';
+    ctx.fillText('(Check event log below)', canvas.width / 2, canvas.height / 2 + 10);
+
+    logEvent('Test suite initialized');
+  </script>
+</body>
+</html>

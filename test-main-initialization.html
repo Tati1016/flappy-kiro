@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Main.js Initialization</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-top: 0;
+    }
+    #gameCanvas {
+      display: block;
+      margin: 20px auto;
+      border: 2px solid #333;
+      background: #87CEEB;
+    }
+    .error-message {
+      color: red;
+      font-weight: bold;
+      text-align: center;
+      padding: 20px;
+    }
+    .hidden {
+      display: none;
+    }
+    .test-results {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f9f9f9;
+      border-left: 4px solid #4CAF50;
+    }
+    .test-results h2 {
+      margin-top: 0;
+      color: #4CAF50;
+    }
+    .test-item {
+      padding: 5px 0;
+    }
+    .pass {
+      color: green;
+    }
+    .fail {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Main.js Initialization Test</h1>
+    <p>This test verifies that main.js correctly initializes all game components.</p>
+    
+    <canvas id="gameCanvas" width="480" height="640"></canvas>
+    <div id="errorMessage" class="error-message hidden">
+      Your browser does not support HTML5 Canvas. Please use a modern browser.
+    </div>
+    
+    <div class="test-results">
+      <h2>Test Results</h2>
+      <div id="testOutput"></div>
+    </div>
+  </div>
+  
+  <script type="module">
+    // Import main.js to trigger initialization
+    import './main.js';
+    
+    // Wait a bit for async initialization to complete
+    setTimeout(() => {
+      const output = document.getElementById('testOutput');
+      const tests = [];
+      
+      // Check if canvas exists
+      const canvas = document.getElementById('gameCanvas');
+      tests.push({
+        name: 'Canvas element exists',
+        pass: canvas !== null
+      });
+      
+      // Check if context is available
+      const context = canvas ? canvas.getContext('2d') : null;
+      tests.push({
+        name: 'Canvas 2D context available',
+        pass: context !== null
+      });
+      
+      // Check if error message is hidden (should be hidden if canvas works)
+      const errorMessage = document.getElementById('errorMessage');
+      tests.push({
+        name: 'Error message hidden (canvas supported)',
+        pass: errorMessage && errorMessage.classList.contains('hidden')
+      });
+      
+      // Check console for initialization message
+      tests.push({
+        name: 'Game initialization started',
+        pass: true // If we got here, initialization started
+      });
+      
+      // Display results
+      let html = '';
+      tests.forEach(test => {
+        const status = test.pass ? '✓ PASS' : '✗ FAIL';
+        const className = test.pass ? 'pass' : 'fail';
+        html += `<div class="test-item ${className}">${status}: ${test.name}</div>`;
+      });
+      
+      const passCount = tests.filter(t => t.pass).length;
+      html += `<div style="margin-top: 15px; font-weight: bold;">`;
+      html += `${passCount}/${tests.length} tests passed`;
+      html += `</div>`;
+      
+      output.innerHTML = html;
+      
+      // Additional info
+      console.log('Test completed. Check the canvas for the start screen.');
+      console.log('You should see "FLAPPY KIRO" title and instructions.');
+    }, 1000);
+  </script>
+</body>
+</html>

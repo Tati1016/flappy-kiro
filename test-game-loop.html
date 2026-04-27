@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Game Loop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-top: 0;
+    }
+    #gameCanvas {
+      display: block;
+      margin: 20px auto;
+      border: 2px solid #333;
+      background: #87CEEB;
+    }
+    .test-results {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f9f9f9;
+      border-left: 4px solid #4CAF50;
+    }
+    .test-results h2 {
+      margin-top: 0;
+      color: #4CAF50;
+    }
+    .test-item {
+      padding: 5px 0;
+    }
+    .pass {
+      color: green;
+    }
+    .fail {
+      color: red;
+    }
+    .info {
+      color: #666;
+      font-style: italic;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Game Loop Test</h1>
+    <p>This test verifies that the game loop correctly handles physics, collisions, and rendering.</p>
+    <p><strong>Instructions:</strong> Click the canvas or press Space to start the game. The test will automatically verify game loop behavior.</p>
+    
+    <canvas id="gameCanvas" width="480" height="640"></canvas>
+    <div id="errorMessage" class="error-message hidden">
+      Your browser does not support HTML5 Canvas. Please use a modern browser.
+    </div>
+    
+    <div class="test-results">
+      <h2>Test Results</h2>
+      <div id="testOutput">Waiting for game to start...</div>
+    </div>
+  </div>
+  
+  <script type="module">
+    import { GameState } from './gameState.js';
+    import { Physics } from './physics.js';
+    import { Ghosty } from './ghosty.js';
+    import { WallManager } from './wallManager.js';
+    import { CollisionDetector } from './collision.js';
+    import { ScoreTracker } from './scoreTracker.js';
+    import { AssetLoader } from './assetLoader.js';
+    import { AudioManager } from './audioManager.js';
+    import { Renderer } from './renderer.js';
+    import { InputHandler } from './input.js';
+
+    const canvas = document.getElementById('gameCanvas');
+    const context = canvas.getContext('2d');
+    const output = document.getElementById('testOutput');
+    
+    const tests = [];
+    let testPhase = 0;
+    
+    function addTest(name, pass, info = '') {
+      tests.push({ name, pass, info });
+      updateDisplay();
+    }
+    
+    function updateDisplay() {
+      let html = '';
+      tests.forEach(test => {
+        const status = test.pass ? '✓ PASS' : '✗ FAIL';
+        const className = test.pass ? 'pass' : 'fail';
+        html += `<div class="test-item ${className}">${status}: ${test.name}`;
+        if (test.info) {
+          html += `<div class="info">${test.info}</div>`;
+        }
+        html += `</div>`;
+      });
+      
+      const passCount = tests.filter(t => t.pass).length;
+      html += `<div style="margin-top: 15px; font-weight: bold;">`;
+      html += `${passCount}/${tests.length} tests passed`;
+      html += `</div>`;
+      
+      output.innerHTML = html;
+    }
+    
+    // Initialize game
+    const assetManifest = {
+      images: { ghosty: 'assets/ghosty.png' },
+      audio: { jump: 'assets/jump.wav', gameOver: 'assets/game_over.wav' }
+    };
+    
+    const assetLoader = new AssetLoader();
+    const assets = await assetLoader.loadAll(assetManifest);
+    
+    const gameState = new GameState();
+    const physics = new Physics(0.6, -10, 12);
+    const ghosty = new Ghosty(100, 320, 40, 40);
+    ghosty.sprite = assets.images.ghosty;
+    const wallManager = new WallManager(canvas.width, canvas.height);
+    const collisionDetector = new CollisionDetector();
+    const scoreTracker = new ScoreTracker();
+    const audioManager = new AudioManager(assets.audio);
+    const renderer = new Renderer(canvas, context);
+    const inputHandler = new InputHandler(canvas);
+    
+    let frameCount = 0;
+    let lastGhostyY = ghosty.y;
+    let wallsSpawned = false;
+    let gameStarted = false;
+    
+    inputHandler.onInput(() => {
+      if (gameState.isStart()) {
+        gameState.setState(GameState.PLAYING);
+        gameStarted = true;
+        addTest('Game transitions from START to PLAYING on input', true);
+      } else if (gameState.isPlaying()) {
+        physics.applyJump(ghosty);
+        audioManager.play('jump');
+      } else if (gameState.isGameOver()) {
+        gameState.reset();
+        ghosty.reset();
+        wallManager.reset();
+        scoreTracker.reset();
+      }
+    });
+    
+    inputHandler.enable();
+    
+    // Initial render test
+    renderer.render(gameState, ghosty, wallManager.walls, scoreTracker.getScore());
+    addTest('Initial render completes without errors', true);
+    addTest('Game starts in START state', gameState.isStart());
+    
+    // Game loop
+    let lastTime = performance.now();
+    
+    function gameLoop(currentTime) {
+      const deltaTime = Math.min((currentTime - lastTime) / 16.67, 2.0);
+      lastTime = currentTime;
+      
+      if (gameState.isPlaying()) {
+        frameCount++;
+        
+        // Test physics updates
+        if (frameCount === 1) {
+          addTest('Delta time calculated correctly', deltaTime >= 0 && deltaTime <= 2.0, `Delta: ${deltaTime.toFixed(2)}`);
+        }
+        
+        const beforeY = ghosty.y;
+        physics.applyGravity(ghosty);
+        physics.clampVelocity(ghosty);
+        physics.updatePosition(ghosty, deltaTime);
+        
+        if (frameCount === 10) {
+          addTest('Physics updates Ghosty position', ghosty.y !== lastGhostyY, `Y changed from ${lastGhostyY.toFixed(1)} to ${ghosty.y.toFixed(1)}`);
+          addTest('Gravity applied (velocity increases)', ghosty.velocity > 0, `Velocity: ${ghosty.velocity.toFixed(2)}`);
+        }
+        
+        // Test wall spawning
+        wallManager.update();
+        
+        if (wallManager.walls.length > 0 && !wallsSpawned) {
+          wallsSpawned = true;
+          addTest('Walls spawn during PLAYING state', true, `${wallManager.walls.length} wall(s) spawned`);
+        }
+        
+        // Test collision detection
+        if (collisionDetector.checkBoundaryCollision(ghosty, canvas.height)) {
+          gameState.setState(GameState.GAME_OVER);
+          audioManager.play('gameOver');
+          addTest('Boundary collision detected and triggers GAME_OVER', true);
+        }
+        
+        for (const wall of wallManager.walls) {
+          if (collisionDetector.checkWallCollision(ghosty, wall)) {
+            gameState.setState(GameState.GAME_OVER);
+            audioManager.play('gameOver');
+            addTest('Wall collision detected and triggers GAME_OVER', true);
+            break;
+          }
+        }
+        
+        // Test score tracking
+        for (const wall of wallManager.walls) {
+          if (!wall.passed && wall.x + wall.width < ghosty.x) {
+            wall.passed = true;
+            const oldScore = scoreTracker.getScore();
+            scoreTracker.increment();
+            const newScore = scoreTracker.getScore();
+            addTest('Score increments when passing wall', newScore === oldScore + 1, `Score: ${oldScore} → ${newScore}`);
+          }
+        }
+        
+        lastGhostyY = ghosty.y;
+      }
+      
+      // Test rendering
+      renderer.render(gameState, ghosty, wallManager.walls, scoreTracker.getScore());
+      
+      if (frameCount === 60 && gameStarted) {
+        addTest('Game loop runs for 60 frames without errors', true);
+      }
+      
+      requestAnimationFrame(gameLoop);
+    }
+    
+    gameLoop(lastTime);
+    
+    // Auto-start after 2 seconds for automated testing
+    setTimeout(() => {
+      if (!gameStarted) {
+        console.log('Auto-starting game for testing...');
+        canvas.click();
+      }
+    }, 2000);
+  </script>
+</body>
+</html>

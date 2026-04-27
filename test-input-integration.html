@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Input Integration Test - Flappy Kiro</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #f0f0f0;
+    }
+    h1 {
+      color: #333;
+    }
+    .test-results {
+      background-color: white;
+      padding: 20px;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+    .test-item {
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 3px;
+    }
+    .pass {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .fail {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Input Integration Test Suite</h1>
+  
+  <div class="info">
+    <strong>Testing:</strong> Input handling wired to game actions (Task 12.3)
+  </div>
+
+  <div class="test-results">
+    <h2>Test Results</h2>
+    <div id="results"></div>
+  </div>
+
+  <script type="module">
+    import { InputHandler } from './input.js';
+    import { GameState } from './gameState.js';
+    import { Physics } from './physics.js';
+    import { Ghosty } from './ghosty.js';
+    import { AudioManager } from './audioManager.js';
+    import { WallManager } from './wallManager.js';
+    import { ScoreTracker } from './scoreTracker.js';
+
+    const resultsDiv = document.getElementById('results');
+    let testResults = [];
+
+    function addTestResult(name, passed, message) {
+      testResults.push({ name, passed, message });
+      updateResults();
+    }
+
+    function updateResults() {
+      resultsDiv.innerHTML = testResults.map(test => 
+        `<div class="test-item ${test.passed ? 'pass' : 'fail'}">
+          ${test.passed ? '✓' : '✗'} ${test.name}: ${test.message}
+        </div>`
+      ).join('');
+    }
+
+    // Create mock canvas
+    const mockCanvas = document.createElement('canvas');
+    mockCanvas.width = 480;
+    mockCanvas.height = 640;
+
+    // Test 1: Input during START state transitions to PLAYING
+    try {
+      const gameState = new GameState();
+      const inputHandler = new InputHandler(mockCanvas);
+      
+      inputHandler.onInput(() => {
+        if (gameState.isStart()) {
+          gameState.setState(GameState.PLAYING);
+        }
+      });
+      
+      inputHandler.enable();
+      
+      // Verify initial state
+      const initialState = gameState.isStart();
+      
+      // Simulate input
+      inputHandler.handleClick();
+      
+      // Verify state changed to PLAYING
+      const finalState = gameState.isPlaying();
+      
+      addTestResult(
+        'START → PLAYING transition',
+        initialState && finalState,
+        'Input during START state transitions to PLAYING'
+      );
+    } catch (error) {
+      addTestResult('START → PLAYING transition', false, `Error: ${error.message}`);
+    }
+
+    // Test 2: Input during PLAYING state applies jump physics
+    try {
+      const gameState = new GameState();
+      const physics = new Physics(0.6, -10, 12);
+      const ghosty = new Ghosty(100, 320, 40, 40);
+      const inputHandler = new InputHandler(mockCanvas);
+      
+      gameState.setState(GameState.PLAYING);
+      
+      inputHandler.onInput(() => {
+        if (gameState.isPlaying()) {
+          physics.applyJump(ghosty);
+        }
+      });
+      
+      inputHandler.enable();
+      
+      // Set initial velocity
+      ghosty.velocity = 5;
+      
+      // Simulate input
+      inputHandler.handleClick();
+      
+      // Verify jump was applied (velocity should be -10)
+      const jumpApplied = ghosty.velocity === -10;
+      
+      addTestResult(
+        'PLAYING jump physics',
+        jumpApplied,
+        'Input during PLAYING state applies jump physics'
+      );
+    } catch (error) {
+      addTestResult('PLAYING jump physics', false, `Error: ${error.message}`);
+    }
+
+    // Test 3: Input during PLAYING state plays jump sound
+    try {
+      const gameState = new GameState();
+      const audioManager = new AudioManager({});
+      const inputHandler = new InputHandler(mockCanvas);
+      
+      gameState.setState(GameState.PLAYING);
+      
+      let soundPlayed = false;
+      audioManager.play = (soundName) => {
+        if (soundName === 'jump') {
+          soundPlayed = true;
+        }
+      };
+      
+      inputHandler.onInput(() => {
+        if (gameState.isPlaying()) {
+          audioManager.play('jump');
+        }
+      });
+      
+      inputHandler.enable();
+      
+      // Simulate input
+      inputHandler.handleClick();
+      
+      addTestResult(
+        'PLAYING jump sound',
+        soundPlayed,
+        'Input during PLAYING state plays jump sound'
+      );
+    } catch (error) {
+      addTestResult('PLAYING jump sound', false, `Error: ${error.message}`);
+    }
+
+    // Test 4: Input during GAME_OVER state resets game
+    try {
+      const gameState = new GameState();
+      const ghosty = new Ghosty(100, 320, 40, 40);
+      const wallManager = new WallManager(480, 640);
+      const scoreTracker = new ScoreTracker();
+      const inputHandler = new InputHandler(mockCanvas);
+      
+      // Set up game over state
+      gameState.setState(GameState.PLAYING);
+      gameState.setState(GameState.GAME_OVER);
+      
+      // Modify game state
+      ghosty.y = 500;
+      ghosty.velocity = 10;
+      scoreTracker.increment();
+      scoreTracker.increment();
+      wallManager.generateWall();
+      
+      inputHandler.onInput(() => {
+        if (gameState.isGameOver()) {
+          gameState.reset();
+          ghosty.reset();
+          wallManager.reset();
+          scoreTracker.reset();
+        }
+      });
+      
+      inputHandler.enable();
+      
+      // Simulate input
+      inputHandler.handleClick();
+      
+      // Verify everything was reset
+      const stateReset = gameState.isStart();
+      const ghostyReset = ghosty.y === 320 && ghosty.velocity === 0;
+      const scoreReset = scoreTracker.getScore() === 0;
+      const wallsReset = wallManager.walls.length === 0;
+      
+      addTestResult(
+        'GAME_OVER reset',
+        stateReset && ghostyReset && scoreReset && wallsReset,
+        'Input during GAME_OVER state resets game and transitions to START'
+      );
+    } catch (error) {
+      addTestResult('GAME_OVER reset', false, `Error: ${error.message}`);
+    }
+
+    // Test 5: Complete game flow simulation
+    try {
+      const gameState = new GameState();
+      const physics = new Physics(0.6, -10, 12);
+      const ghosty = new Ghosty(100, 320, 40, 40);
+      const wallManager = new WallManager(480, 640);
+      const scoreTracker = new ScoreTracker();
+      const audioManager = new AudioManager({});
+      const inputHandler = new InputHandler(mockCanvas);
+      
+      let jumpSoundCount = 0;
+      audioManager.play = (soundName) => {
+        if (soundName === 'jump') {
+          jumpSoundCount++;
+        }
+      };
+      
+      // Wire up input handling (same as main.js)
+      inputHandler.onInput(() => {
+        if (gameState.isStart()) {
+          gameState.setState(GameState.PLAYING);
+        } else if (gameState.isPlaying()) {
+          physics.applyJump(ghosty);
+          audioManager.play('jump');
+        } else if (gameState.isGameOver()) {
+          gameState.reset();
+          ghosty.reset();
+          wallManager.reset();
+          scoreTracker.reset();
+        }
+      });
+      
+      inputHandler.enable();
+      
+      // Simulate game flow
+      const step1 = gameState.isStart();
+      
+      inputHandler.handleClick(); // START → PLAYING
+      const step2 = gameState.isPlaying();
+      
+      inputHandler.handleClick(); // Jump
+      const step3 = ghosty.velocity === -10 && jumpSoundCount === 1;
+      
+      inputHandler.handleClick(); // Jump again
+      const step4 = ghosty.velocity === -10 && jumpSoundCount === 2;
+      
+      gameState.setState(GameState.GAME_OVER); // Simulate collision
+      const step5 = gameState.isGameOver();
+      
+      inputHandler.handleClick(); // Reset
+      const step6 = gameState.isStart() && ghosty.velocity === 0;
+      
+      addTestResult(
+        'Complete game flow',
+        step1 && step2 && step3 && step4 && step5 && step6,
+        'Full game flow works correctly: START → PLAYING → jumps → GAME_OVER → START'
+      );
+    } catch (error) {
+      addTestResult('Complete game flow', false, `Error: ${error.message}`);
+    }
+
+    // Test 6: Input handler can be disabled
+    try {
+      const gameState = new GameState();
+      const inputHandler = new InputHandler(mockCanvas);
+      
+      let callbackCalled = false;
+      inputHandler.onInput(() => {
+        callbackCalled = true;
+      });
+      
+      inputHandler.enable();
+      inputHandler.disable();
+      
+      // Try to trigger input (should not work)
+      inputHandler.handleClick();
+      
+      addTestResult(
+        'Disabled input handler',
+        !callbackCalled,
+        'Input handler can be disabled and ignores input'
+      );
+    } catch (error) {
+      addTestResult('Disabled input handler', false, `Error: ${error.message}`);
+    }
+
+    console.log('All integration tests completed');
+  </script>
+</body>
+</html>

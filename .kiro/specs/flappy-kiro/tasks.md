@@ -143,7 +143,7 @@ The approach is incremental: we'll build core infrastructure first, then add gam
     - _Requirements: Visual rendering, UI screens, fallback rendering_
 
 - [ ] 10. Implement input handling
-  - [-] 10.1 Create `input.js` module
+  - [x] 10.1 Create `input.js` module
     - Implement `InputHandler` class
     - Add event listeners for mouse click and spacebar
     - Implement `onInput()` callback registration
@@ -151,11 +151,11 @@ The approach is incremental: we'll build core infrastructure first, then add gam
     - Prevent default behavior for spacebar to avoid page scrolling
     - _Requirements: Input handling, keyboard controls, mouse controls_
 
-- [~] 11. Checkpoint - Verify all components are implemented
+- [x] 11. Checkpoint - Verify all components are implemented
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 12. Implement main game loop and integration
-  - [~] 12.1 Create `main.js` entry point
+  - [x] 12.1 Create `main.js` entry point
     - Initialize canvas and check for 2D context support
     - Display error message if canvas not supported
     - Create asset manifest with image and audio paths
@@ -164,7 +164,7 @@ The approach is incremental: we'll build core infrastructure first, then add gam
     - Set up input handler with callback for state transitions and jump
     - _Requirements: Game initialization, browser compatibility_
   
-  - [~] 12.2 Implement game loop with requestAnimationFrame
+  - [x] 12.2 Implement game loop with requestAnimationFrame
     - Calculate delta time for frame-rate independence
     - Clamp delta time to prevent physics breaking on tab focus loss
     - Update physics (apply gravity, update position) during PLAYING state
@@ -175,7 +175,7 @@ The approach is incremental: we'll build core infrastructure first, then add gam
     - Request next animation frame
     - _Requirements: Game loop, frame-rate independence, collision detection integration_
   
-  - [~] 12.3 Wire input handling to game actions
+  - [x] 12.3 Wire input handling to game actions
     - During START state: transition to PLAYING on input
     - During PLAYING state: apply jump physics and play jump sound on input
     - During GAME_OVER state: reset game and transition to START on input
@@ -191,7 +191,7 @@ The approach is incremental: we'll build core infrastructure first, then add gam
     - _Requirements: Game loop, state transitions, collision detection_
 
 - [ ] 13. Add visual polish and styling
-  - [~] 13.1 Enhance CSS styling
+  - [x] 13.1 Enhance CSS styling
     - Add retro font imports (e.g., Press Start 2P from Google Fonts)
     - Style canvas with border and centered layout
     - Add background color and page styling
