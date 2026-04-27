@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GameState Module Test</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background-color: #1a1a1a;
+      color: #00ff00;
+    }
+    .test-result {
+      margin: 10px 0;
+      padding: 10px;
+      border-left: 3px solid #00ff00;
+    }
+    .pass { color: #00ff00; }
+    .fail { color: #ff0000; border-left-color: #ff0000; }
+    h1 { color: #00ffff; }
+  </style>
+</head>
+<body>
+  <h1>GameState Module Test</h1>
+  <div id="results"></div>
+  
+  <script type="module">
+    import { GameState } from './gameState.js';
+
+    const results = document.getElementById('results');
+    
+    function log(message, isPass = true) {
+      const div = document.createElement('div');
+      div.className = `test-result ${isPass ? 'pass' : 'fail'}`;
+      div.textContent = message;
+      results.appendChild(div);
+    }
+
+    try {
+      log('=== Testing GameState Module ===');
+      
+      // Test 1: Initial state
+      const gameState = new GameState();
+      const test1 = gameState.getCurrentState() === 'START' && 
+                    gameState.isStart() === true &&
+                    gameState.isPlaying() === false &&
+                    gameState.isGameOver() === false;
+      log(`Test 1: Initial state is START - ${test1 ? 'PASS' : 'FAIL'}`, test1);
+      
+      // Test 2: Valid transition START → PLAYING
+      gameState.setState(GameState.PLAYING);
+      const test2 = gameState.getCurrentState() === 'PLAYING' && gameState.isPlaying() === true;
+      log(`Test 2: Valid transition START → PLAYING - ${test2 ? 'PASS' : 'FAIL'}`, test2);
+      
+      // Test 3: Valid transition PLAYING → GAME_OVER
+      gameState.setState(GameState.GAME_OVER);
+      const test3 = gameState.getCurrentState() === 'GAME_OVER' && gameState.isGameOver() === true;
+      log(`Test 3: Valid transition PLAYING → GAME_OVER - ${test3 ? 'PASS' : 'FAIL'}`, test3);
+      
+      // Test 4: Valid transition GAME_OVER → START
+      gameState.setState(GameState.START);
+      const test4 = gameState.getCurrentState() === 'START' && gameState.isStart() === true;
+      log(`Test 4: Valid transition GAME_OVER → START - ${test4 ? 'PASS' : 'FAIL'}`, test4);
+      
+      // Test 5: Invalid transition START → GAME_OVER (should be rejected)
+      gameState.setState(GameState.GAME_OVER);
+      const test5 = gameState.getCurrentState() === 'START'; // Should stay at START
+      log(`Test 5: Invalid transition START → GAME_OVER rejected - ${test5 ? 'PASS' : 'FAIL'}`, test5);
+      
+      // Test 6: Reset functionality
+      gameState.setState(GameState.PLAYING);
+      gameState.setState(GameState.GAME_OVER);
+      gameState.reset();
+      const test6 = gameState.getCurrentState() === 'START';
+      log(`Test 6: Reset returns to START - ${test6 ? 'PASS' : 'FAIL'}`, test6);
+      
+      // Test 7: Invalid transition PLAYING → START (should be rejected)
+      gameState.setState(GameState.PLAYING);
+      gameState.setState(GameState.START);
+      const test7 = gameState.getCurrentState() === 'PLAYING'; // Should stay at PLAYING
+      log(`Test 7: Invalid transition PLAYING → START rejected - ${test7 ? 'PASS' : 'FAIL'}`, test7);
+      
+      // Test 8: Invalid transition GAME_OVER → PLAYING (should be rejected)
+      gameState.setState(GameState.GAME_OVER);
+      gameState.setState(GameState.PLAYING);
+      const test8 = gameState.getCurrentState() === 'GAME_OVER'; // Should stay at GAME_OVER
+      log(`Test 8: Invalid transition GAME_OVER → PLAYING rejected - ${test8 ? 'PASS' : 'FAIL'}`, test8);
+      
+      const allPassed = test1 && test2 && test3 && test4 && test5 && test6 && test7 && test8;
+      log(`\n=== All Tests ${allPassed ? 'PASSED' : 'FAILED'} ===`, allPassed);
+      
+    } catch (error) {
+      log(`ERROR: ${error.message}`, false);
+      console.error(error);
+    }
+  </script>
+</body>
+</html>
